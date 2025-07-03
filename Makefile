@@ -1,7 +1,7 @@
 .PHONY: build-x86 build-arm64 push all
 
 # Build Vars
-IMAGENAME=nicolaka/netshoot
+IMAGENAME=datagenx/netshoot
 VERSION=0.1
 
 
@@ -12,7 +12,7 @@ build-x86:
 build-arm64:
 		@docker build --platform linux/arm64 -t ${IMAGENAME}:${VERSION} .
 build-all:
-		@docker buildx build --platform linux/amd64,linux/arm64 --output "type=image,push=false" --file ./Dockerfile .
+		@docker buildx build --platform linux/amd64,linux/arm64 --output "type=image,push=false" --file ./Dockerfile -t ${IMAGENAME}:${VERSION} .
 push:
 	 	@docker push ${IMAGENAME}:${VERSION} 
 all: build-all push

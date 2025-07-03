@@ -68,11 +68,12 @@ RUN set -ex \
     websocat \
     swaks \
     perl-crypt-ssleay \
-    perl-net-ssleay 
-#    yq \
-#    socat \
-#    nmap-ncat
-    #xclip
+    perl-net-ssleay \
+    yq \
+    socat \
+    nmap-ncat \
+    xclip 
+
 
 # Installing ctop - top-like container monitor
 COPY --from=fetcher /tmp/ctop /usr/local/bin/ctop
