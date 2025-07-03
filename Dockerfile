@@ -1,13 +1,36 @@
-FROM debian:stable-slim as fetcher
+FROM debian:stable-slim AS fetcher
+
 COPY build/fetch_binaries.sh /tmp/fetch_binaries.sh
 
 RUN apt-get update && apt-get install -y \
   curl \
-  wget
-
+  wget \
+  jq
 RUN /tmp/fetch_binaries.sh
 
-FROM alpine:3.21.0
+RUN set -ex; \
+	case "$(uname -m)" in \
+	'amd64' | 'x86_64') \
+		GOARCH='amd64' \
+		;; \
+	'mips64' | 'mips64le' | 'mips64el') \
+		GOARCH='mips64el' \
+		;; \
+	'aarch64') \
+		GOARCH='arm64' \
+		;; \
+	'loongarch64') \
+		GOARCH='loong64' \
+		;; \
+	esac; \
+	\
+	ls -l /tmp /tmp/${GOARCH}/; \
+	mv /tmp/${GOARCH}/* /opt/; \
+  ls -l /opt
+
+
+
+FROM alpine:3.21
 
 RUN set -ex \
     && echo "http://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
@@ -70,32 +93,28 @@ RUN set -ex \
     websocat \
     swaks \
     perl-crypt-ssleay \
-    perl-net-ssleay
+    perl-net-ssleay \
+    yq \
+    nmap-ncat
 
-# Installing ctop - top-like container monitor
-COPY --from=fetcher /tmp/ctop /usr/local/bin/ctop
 
-# Installing calicoctl
-COPY --from=fetcher /tmp/calicoctl /usr/local/bin/calicoctl
-
-# Installing termshark
-COPY --from=fetcher /tmp/termshark /usr/local/bin/termshark
-
-# Installing grpcurl
-COPY --from=fetcher /tmp/grpcurl /usr/local/bin/grpcurl
-
-# Installing fortio
-COPY --from=fetcher /tmp/fortio /usr/local/bin/fortio
+COPY --from=fetcher /opt/* /usr/local/bin/
 
 # Setting User and Home
 USER root
 WORKDIR /root
-ENV HOSTNAME netshoot
+ENV HOSTNAME=netshoot
 
 # ZSH Themes
-RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
-RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+RUN set -eux; \
+  curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh; \
+  find /root/.oh-my-zsh/plugins -type f -name demo.gif -delete; \
+  rm -rf /root/.oh-my-zsh/.git;
+  
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
+  && rm -rf ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions/.git
+RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k \
+  && rm -rf ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k/.git
 COPY zshrc .zshrc
 COPY motd motd
 

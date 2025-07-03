@@ -22,7 +22,7 @@ spec:
       serviceAccountName: cni-plugin
       hostNetwork: true
       containers:
-      - image: nicolaka/netshoot
+      - image: datagenx/netshoot
         name: netshoot
         command: ["ping","localhost"]
         volumeMounts:
