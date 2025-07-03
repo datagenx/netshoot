@@ -74,6 +74,7 @@ plugins=(
 )
 
 source $ZSH/oh-my-zsh.sh
+# figlet -f /usr/share/figlet/fonts/banner -w 200 $(hostname) >> /root/motd
 # User configuration
 cat motd
 
@@ -141,3 +142,9 @@ POWERLEVEL9K_PROMPT_ADD_NEWLINE=true
 echo -e "\033]6;1;bg;red;brightness;18\a"
 echo -e "\033]6;1;bg;green;brightness;26\a"
 echo -e "\033]6;1;bg;blue;brightness;33\a"
+
+
+# Few alias 
+alias c=clear 
+alias update='apk update && apk upgrade'
+alias install='apk add --no-cache'

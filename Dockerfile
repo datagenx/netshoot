@@ -1,9 +1,7 @@
-FROM debian:stable-slim as fetcher
+FROM debian:stable-slim AS fetcher
 COPY build/fetch_binaries.sh /tmp/fetch_binaries.sh
 
-RUN apt-get update && apt-get install -y \
-  curl \
-  wget
+RUN apt-get update && apt-get install -y curl wget
 
 RUN /tmp/fetch_binaries.sh
 
@@ -70,7 +68,11 @@ RUN set -ex \
     websocat \
     swaks \
     perl-crypt-ssleay \
-    perl-net-ssleay
+    perl-net-ssleay 
+#    yq \
+#    socat \
+#    nmap-ncat
+    #xclip
 
 # Installing ctop - top-like container monitor
 COPY --from=fetcher /tmp/ctop /usr/local/bin/ctop
@@ -90,14 +92,16 @@ COPY --from=fetcher /tmp/fortio /usr/local/bin/fortio
 # Setting User and Home
 USER root
 WORKDIR /root
-ENV HOSTNAME netshoot
 
 # ZSH Themes
-RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
-RUN git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-COPY zshrc .zshrc
-COPY motd motd
+RUN curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh \
+&& git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions \
+&& rm -rf ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions/.git \ 
+&& git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k \
+&& rm -rf ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k/.git
+
+COPY zshrc motd /root/
+RUN mv /root/zshrc /root/.zshrc 
 
 # Fix permissions for OpenShift and tshark
 RUN chmod -R g=u /root
